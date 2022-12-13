@@ -10,9 +10,18 @@
   },
   "dependencies": {
     "expo": "~47.0.8",
+    "expo-location": "~15.0.1",
     "expo-status-bar": "~1.4.2",
+    "geolib": "^3.3.3",
+    "prop-types": "^15.8.1",
     "react": "18.1.0",
-    "react-native": "0.70.5"
+    "react-native": "0.70.5",
+    "react-native-linear-gradient": "^2.6.2",
+    "react-native-pulsating-circle": "^1.0.0",
+    "react-native-pulse": "^1.0.7",
+    "react-native-reanimated": "~2.12.0",
+    "rn-pulsing-circle": "^1.0.0",
+    "timers-promises": "^1.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9"
