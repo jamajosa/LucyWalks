@@ -1,146 +1,138 @@
-import React, { useState, useEffect } from 'react';
-import { Image, View, Text, Dimensions } from 'react-native';
-import { Grid, Col, Row } from 'react-native-easy-grid';
-import { Magnetometer } from 'expo-sensors';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, Text, TouchableWithoutFeedback, Vibration, View } from 'react-native';
+import * as Permissions from 'expo-permissions';
+import * as Location from 'expo-location';
+import React from 'react';
+import {getDistance, getPreciseDistance} from 'geolib';
 
-const { height, width } = Dimensions.get('window');
+export default class App extends React.Component {
 
-export default App = () => {
 
-  const [subscription, setSubscription] = useState(null);
-  const [magnetometer, setMagnetometer] = useState(0);
-
-  useEffect(() => {
-    _toggle();
-    return () => {
-      _unsubscribe();
-    };
-  }, []);
-
-  const _toggle = () => {
-    if (subscription) {
-      _unsubscribe();
-    } else {
-      _subscribe();
-    }
+  oldstate = {
+    oldlongitude:0,
+    oldLatitude:0,
+    longitude: 0,
+    latitude: 0,
+    errorMessage: ''
+  }
+  state = {
+    //location: {},
+    longitude: 0,
+    latitude: 0,
+    errorMessage: ''
   };
+  dis =0.0;
+  color = 'green';
+  text = "";
 
-  const _subscribe = () => {
-    setSubscription(
-      Magnetometer.addListener((data) => {
-        setMagnetometer(_angle(data));
+  componentDidMount() {
+    this._getLocation()
+  }
+
+  _getLocation = async () => {
+    const { status } = await Permissions.askAsync(Permissions.LOCATION_FOREGROUND);
+    if (status === 'granted') {
+      this._updateLocation(0);
+  }
+    if(status !== 'granted'){
+      console.log ('Permission not granted!');
+      this.setState({
+        errorMessage: 'We hebben geen toegang tot uw locatie.'
       })
+    }
+  }
+
+//   getAngle(lat1,lat2,long1,long2) {
+//     const dLon = (long2 - long1);
+//     const y = Math.sin(dLon) * Math.cos(lat2);
+//     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1)
+//             * Math.cos(lat2) * Math.cos(dLon);
+//     let brng = Math.atan2(y, x);
+//     brng = brng * 180 / Math.PI;
+//     brng = (brng + 360) % 360;
+//     brng = 360 - brng; // count degrees counter-clockwise - remove to make clockwise
+//     return brng;
+// }
+
+  calculateDistance(){
+    const dis2 = this.dis
+    this.dis = getPreciseDistance(
+      {latitude: 51.493280, longitude: 4.294605 },
+      {latitude: this.state.latitude, longitude: this.state.longitude},
     );
-  };
 
-  const _unsubscribe = () => {
-    subscription && subscription.remove();
-    setSubscription(null);
-  };
 
-  const _angle = (magnetometer) => {
-    let angle = 0;
-    if (magnetometer) {
-      let { x, y, z } = magnetometer;
-      if (Math.atan2(y, x) >= 0) {
-        angle = Math.atan2(y, x) * (180 / Math.PI);
-      } else {
-        angle = (Math.atan2(y, x) + 2 * Math.PI) * (180 / Math.PI);
+    this.text = this.getAngle(this.state.latitude, 51.493280, this.state.longitude, 4.294605);
+
+    this.setBackgroundColor();
+  };
+ 
+
+  _updateLocation = async()=>{
+    const timers = require('timers-promises')
+    await timers.setTimeout(1500);
+    const userLocation = await Location.getCurrentPositionAsync({enableHighAccuracy: true}).then((data) =>
+    {
+      this.setState({
+        oldlongitude:this.state.longitude,
+        oldLatitude:this.state.latitude,
+        //location: data,
+        longitude: data.coords.longitude,
+        latitude: data.coords.latitude
+      })
+      this.calculateDistance();
+      this._updateLocation();
+    })
+  }
+  setBackgroundColor = () => {
+    
+    if (this.dis === 0) {
+      this.color = '';
+    } else if (this.dis >= 1 && this.dis < 20) {
+      if (this.color !='red'){
+        const interval = setInterval(() => Vibration.vibrate(), 5000);
+        setTimeout(() => clearInterval(interval), 5000);
+        this.color = 'red';
       }
+      this.color = 'red';
+    } else if (this.dis >= 20 && this.dis < 35) {
+      if (this.color !='orange'){
+        const interval = setInterval(() => Vibration.vibrate(), 5000);
+        setTimeout(() => clearInterval(interval), 2000);
+        this.color = 'orange';
+      }
+    } else if (this.dis >= 35 && this.dis < 50) {
+      if (this.color !='yellow'){
+        const interval = setInterval(() => Vibration.vibrate(), 5000);
+        setTimeout(() => clearInterval(interval), 1000);
+        this.color = 'yellow';
+      }
+    } else if (this.dis >= 50) {
+      this.color = 'green';
     }
-    return Math.round(angle);
-  };
-
-  const _direction = (degree) => {
-    if (degree >= 22.5 && degree < 67.5) {
-      return 'NE';
-    }
-    else if (degree >= 67.5 && degree < 112.5) {
-      return 'E';
-    }
-    else if (degree >= 112.5 && degree < 157.5) {
-      return 'SE';
-    }
-    else if (degree >= 157.5 && degree < 202.5) {
-      return 'S';
-    }
-    else if (degree >= 202.5 && degree < 247.5) {
-      return 'SW';
-    }
-    else if (degree >= 247.5 && degree < 292.5) {
-      return 'W';
-    }
-    else if (degree >= 292.5 && degree < 337.5) {
-      return 'NW';
-    }
-    else {
-      return 'N';
-    }
-  };
-
-  // Match the device top with pointer 0° degree. (By default 0° starts from the right of the device.)
-  const _degree = (magnetometer) => {
-    return magnetometer - 90 >= 0 ? magnetometer - 90 : magnetometer + 271;
-  };
-
-  return (
-
-    <Grid style={{ backgroundColor: 'black' }}>
-      <Row style={{ alignItems: 'center' }} size={.9}>
-        <Col style={{ alignItems: 'center' }}>
-          <Text
-            style={{
-              color: '#fff',
-              fontSize: height / 26,
-              fontWeight: 'bold'
-            }}>
-            {_direction(_degree(magnetometer))}
-          </Text>
-        </Col>
-      </Row>
-
-      <Row style={{ alignItems: 'center' }} size={.1}>
-        <Col style={{ alignItems: 'center' }}>
-          <View style={{ position: 'absolute', width: width, alignItems: 'center', top: 0 }}>
-            <Image source={require('./assets/compass_pointer.png')} style={{
-              height: height / 26,
-              resizeMode: 'contain'
-            }} />
-          </View>
-        </Col>
-      </Row>
-
-      <Row style={{ alignItems: 'center' }} size={2}>
-        <Text style={{
-          color: '#fff',
-          fontSize: height / 27,
-          width: width,
-          position: 'absolute',
-          textAlign: 'center'
-        }}>
-          {_degree(magnetometer)}°
-          </Text>
-
-        <Col style={{ alignItems: 'center' }}>
-
-          <Image source={require("./assets/compass_bg.png")} style={{
-            height: width - 80,
-            justifyContent: 'center',
-            alignItems: 'center',
-            resizeMode: 'contain',
-            transform: [{ rotate: 360 - magnetometer + 'deg' }]
-          }} />
-
-        </Col>
-      </Row>
-
-      <Row style={{ alignItems: 'center' }} size={1}>
-        <Col style={{ alignItems: 'center' }}>
-          <Text style={{ color: '#fff' }}>Copyright @RahulHaque</Text>
-        </Col>
-      </Row>
-
-    </Grid>
-
+};
+  render() { return (
+    <View style={[styles.container,{backgroundColor: this.color}]}>
+      {/* <Text>longitude: {this.state.longitude}</Text>
+      <Text>latitude: {this.state.latitude}</Text>
+      <Text>{this.dis}</Text> */
+      <Text style={styles.text}>{this.dis} METER {this.text}</Text>
+      }
+      <StatusBar style="auto" />
+    </View>
   );
+  }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    fontSize: 40,
+    fontWeight: "bold",
+    color:'white',
+  }
+});

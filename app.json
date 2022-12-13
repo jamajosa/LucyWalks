@@ -1,21 +1,15 @@
 {
   "expo": {
-    "name": "Compass",
-    "description": "A simple compass app built with expo & react-native.",
-    "githubUrl": "https://github.com/rahulhaque/compass-react-native-expo",
-    "slug": "compass",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "name": "locationTracker",
+    "slug": "locationTracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#000"
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -24,12 +18,16 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "requireFullScreen": true,
-      "bundleIdentifier": "org.rahulhaque.compass"
+      "supportsTablet": true
     },
     "android": {
-      "package": "org.rahulhaque.compass"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }
