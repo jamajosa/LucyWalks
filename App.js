@@ -152,7 +152,7 @@ export default function App() {
 
 	function collectPoint() {
 		setCollected(collected + 1)
-		//remove point from array of points
+		//remove point from array of pointshghg
 	}
 
 	return (
